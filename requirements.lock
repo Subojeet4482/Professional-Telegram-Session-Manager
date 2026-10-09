@@ -1,0 +1,46 @@
+# Fully pinned snapshot of requirements.txt for reproducible production installs.
+#
+# requirements.txt declares the abstract, floor-pinned dependency contract
+# (what versions this app is written against). This file pins every DIRECT
+# dependency to the exact version it was last verified against, so a
+# production deploy gets the same versions every time instead of whatever
+# happens to satisfy the ranges in requirements.txt on install day — an
+# upstream release (accidental break OR a compromised package version) no
+# longer changes behavior silently between deploys.
+#
+# Usage:
+#   pip install -r requirements.lock
+#
+# Regenerating (preferred — also pins the full transitive dependency tree
+# and can add hashes for supply-chain verification):
+#   pip install pip-tools
+#   pip-compile --generate-hashes --output-file=requirements.lock requirements.txt
+#   pip install --require-hashes -r requirements.lock
+#
+# If pip-tools is unavailable, regenerate by hand from a clean virtualenv:
+#   python -m venv .venv && .venv/bin/pip install -r requirements.txt
+#   .venv/bin/pip freeze > requirements.lock
+#   (then trim it back to this project's direct dependencies, or keep the
+#   full transitive freeze for maximum reproducibility)
+#
+# Last verified: 2026-07-19
+
+aiogram==3.27.0
+Telethon==1.44.0
+python-socks==2.8.1
+aiohttp==3.13.5
+python-dotenv==1.0.1
+PySocks==1.7.1
+pillow==10.4.0
+aiosqlite==0.22.1
+matplotlib==3.10.9
+fastapi==0.135.3
+uvicorn==0.44.0
+Jinja2==3.1.6
+python-multipart==0.0.32
+SQLAlchemy==2.0.49
+greenlet==3.3.2
+opentele==1.15.1
+phonenumbers==9.0.28
+pycountry==26.2.16
+cryptography==47.0.0

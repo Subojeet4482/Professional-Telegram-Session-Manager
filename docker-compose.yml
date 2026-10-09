@@ -1,0 +1,16 @@
+services:
+  bot:
+    build: .
+    container_name: session-manager-bot
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "${PANEL_PORT:-8080}:${PANEL_PORT:-8080}"
+    volumes:
+      # Persist state across container rebuilds/restarts.
+      - ./bot.db:/app/bot.db
+      - ./sessions:/app/sessions
+      - ./temp_sessions:/app/temp_sessions
+      - ./.2fa_key:/app/.2fa_key
+      - ./.csrf_key:/app/.csrf_key

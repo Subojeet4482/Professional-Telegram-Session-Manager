@@ -1,0 +1,53 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+.venv/
+.env
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+bot.db
+
+# Encryption key for 2FA passwords at rest — NEVER commit this.
+.2fa_key
+.csrf_key
+
+# Sessions & Telethon
+sessions/
+data/
+downloads/
+exports/
+*.session
+*.session-journal
+*.session-shm
+*.session-wal
+*.tdata
+
+# Telegram Desktop credential payloads.
+# NOTE: `*.tdata` above only matches a file extension — real tdata is a
+# DIRECTORY named `tdata`, which it does NOT cover. These entries do.
+tdata/
+testtdata/
+temp_sessions/
+tdataApp/
+out.txt
+
+# Web Panel & Static
+web/static/images/*.png
+
+# IDEs & OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Claude / Artifacts
+.claude/
+*.zip
+task.md
+tips_and_features.md

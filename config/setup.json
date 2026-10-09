@@ -1,0 +1,10 @@
+{
+    "setups": {
+        "48": {
+            "proxy": "socks5://Q8MThTQXs990_custom_zone_DE:2587779@change6.owlproxy.com:7778",
+            "password": "1122",
+            "setup_type": "TelegramDesktop"
+        }
+    },
+    "default_setup": null
+}

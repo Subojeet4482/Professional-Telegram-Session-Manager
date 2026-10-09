@@ -1,0 +1,371 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Session Manager{% endblock %}
+{% block nav_dashboard %}active{% endblock %}
+{% block page_title %}Overview{% endblock %}
+
+{% block head %}
+<script src="/static/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="bento-grid">
+
+    <!-- Large Activity Widget -->
+    <div class="widget col-span-8 row-span-2 lg:row-span-1 widget-pad-none">
+        <div class="widget-header-pad flex-between border-b">
+            <div class="widget-title">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                Network Activity
+            </div>
+            <button class="btn btn-glass btn-sm" data-action="export-all">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Export
+            </button>
+        </div>
+        <div class="flex-start gap-8 p-6 flex-1">
+            <div class="flex-col">
+                <div class="data-value" id="totalSessions">{{ total_sessions }}</div>
+                <div class="data-label">Active Sessions</div>
+            </div>
+            <div class="flex-col">
+                <div class="text-4xl font-bold mb-2 gradient-text text-success" id="totalCountries">{{ countries }}</div>
+                <div class="data-label">Active Countries</div>
+            </div>
+            <div class="flex-col">
+                <div class="text-4xl font-bold mb-2 gradient-text text-warning">{{ admins|length }}</div>
+                <div class="data-label">System Admins</div>
+            </div>
+        </div>
+        <!-- Decorative graphic for the large widget -->
+        <div class="w-full flex-1 border-t" style="background: linear-gradient(180deg, rgba(91, 140, 255, 0.08) 0%, transparent 100%); min-height: 40px;"></div>
+    </div>
+
+    <!-- Small Session Widgets -->
+    <div class="col-span-4 flex-col gap-4">
+        <div class="widget widget-pad-tight flex-1 justify-center">
+            <div class="flex-between mb-2">
+                <span class="badge accent">TOTAL</span>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-accent"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </div>
+            <div class="text-3xl font-bold mb-1">{{ total_sessions }}</div>
+            <div class="text-xs text-muted font-medium">All Accounts</div>
+        </div>
+
+        <div class="widget widget-pad-tight flex-1 justify-center">
+            <div class="flex-between mb-2">
+                <span class="badge accent" style="color: #5B8CFF; border-color: rgba(91,140,255,0.25); background: rgba(91,140,255,0.08);">NEW</span>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-accent"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+            </div>
+            <div class="text-3xl font-bold mb-1">{{ spam_counts.get('NEW_REGISTERED', 0) }}</div>
+            <div class="text-xs text-muted font-medium">New Registered</div>
+        </div>
+
+        <div class="widget widget-pad-tight flex-1 justify-center">
+            <div class="flex-between mb-2">
+                <span class="badge success">FREE</span>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-success"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            </div>
+            <div class="text-3xl font-bold mb-1">{{ spam_counts.get('FREE', 0) }}</div>
+            <div class="text-xs text-muted font-medium">Unrestricted Sessions</div>
+        </div>
+
+        <div class="widget widget-pad-tight flex-1 justify-center">
+            <div class="flex-between mb-2">
+                <span class="badge warning">SPAM</span>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-warning"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            </div>
+            <div class="text-3xl font-bold mb-1">{{ spam_counts.get('SPAM', 0) }}</div>
+            <div class="text-xs text-muted font-medium">Restricted / Spam Block</div>
+        </div>
+
+        <div class="widget widget-pad-tight flex-1 justify-center">
+            <div class="flex-between mb-2">
+                <span class="badge danger">DIED</span>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-danger"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+            </div>
+            <div class="text-3xl font-bold mb-1">{{ account_counts.get('died', 0) }}</div>
+            <div class="text-xs text-muted font-medium">Banned or Dead</div>
+        </div>
+    </div>
+
+    <!-- Status Timeline Chart -->
+    <div class="widget col-span-4 row-span-2 widget-pad-standard flex-col">
+        <div class="widget-title mb-4">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
+            Status Distribution
+        </div>
+        <div class="flex-1 flex items-center justify-center relative w-full h-full" id="chartContainer">
+            <!-- Skeleton shown until JS fully renders the chart -->
+            <div class="skeleton w-full h-full rounded-md absolute" id="chartSkeleton"></div>
+            
+            <canvas id="spamChart" class="w-full h-full opacity-0" style="transition: opacity 0.3s ease;"></canvas>
+            
+            <div class="flex-col items-center justify-center absolute opacity-0" id="chartCenterText" style="pointer-events: none; transition: opacity 0.3s ease;">
+                <span class="text-2xl font-bold text-primary">{{ total_sessions }}</span>
+                <span class="text-xs text-secondary uppercase tracking-widest mt-1">Total</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Countries Panel -->
+    <div class="widget col-span-8 row-span-2 widget-pad-none" id="sessionsSection">
+        <div class="widget-header-pad flex-between border-b">
+            <div class="widget-title">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                Regional Heat
+            </div>
+            <span class="badge muted">{{ country_data|length }} Regions</span>
+        </div>
+        <div class="table-container max-h-[300px]">
+            {% if country_data %}
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Region</th>
+                        <th>Sessions</th>
+                        <th class="text-right">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for folder, info in country_data.items() %}
+                    <tr>
+                        <td>
+                            <div class="flex-start gap-3">
+                                <span class="text-xl">{{ info.flag }}</span>
+                                <span class="font-medium">{{ info.name }}</span>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="flex items-center gap-3">
+                                <span class="w-10">{{ info.count }}</span>
+                                <div class="flex-1 h-1.5 bg-glass border rounded-sm overflow-hidden max-w-24">
+                                    <div class="h-full bg-accent rounded-sm" style="width: {{ (info.count / total_sessions * 100)|int }}%;"></div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="text-right">
+                            <button class="btn btn-glass btn-sm" data-action="view-country" data-folder="{{ folder }}">Manage</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="flex-col items-center justify-center p-8 text-muted opacity-50 h-full">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="mb-3"><circle cx="12" cy="12" r="10"/><path d="M16 16s-1.5-2-4-2-4 2-4 2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+                <p class="text-sm">No regional data available</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Live Scheduler Widget -->
+    <div class="widget col-span-6 row-span-2 widget-pad-standard" id="schedulerSection">
+        <div class="flex-between mb-6">
+            <div class="widget-title">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                System Automation
+            </div>
+            <div class="status-dot"></div>
+        </div>
+        <div class="flex-col gap-4">
+            <div class="flex-between p-4 rounded-md border bg-glass">
+                <div>
+                    <div class="text-sm font-medium text-primary mb-1">Health Check Routine</div>
+                    <div class="text-xs text-secondary">Automated spam & restriction checks</div>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="toggleAutoCheck" {{ 'checked' if sched_info.auto_check }} data-action="toggle-scheduler" data-feature="auto_check">
+                    <span class="switch-slider"></span>
+                </label>
+            </div>
+            
+            <div class="flex-between p-4 rounded-md border bg-glass">
+                <div>
+                    <div class="text-sm font-medium text-primary mb-1">Analytics Reporting</div>
+                    <div class="text-xs text-secondary">Compile and deliver daily statistics</div>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="toggleDailyReport" {{ 'checked' if sched_info.daily_report }} data-action="toggle-scheduler" data-feature="daily_report">
+                    <span class="switch-slider"></span>
+                </label>
+            </div>
+            
+            <div class="flex-between p-4 rounded-md border bg-glass">
+                <div>
+                    <div class="text-sm font-medium text-primary mb-1">Data Redundancy</div>
+                    <div class="text-xs text-secondary">Automated session ZIP backups</div>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="toggleAutoBackup" {{ 'checked' if sched_info.auto_backup }} data-action="toggle-scheduler" data-feature="auto_backup">
+                    <span class="switch-slider"></span>
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Panel -->
+    <div class="widget col-span-6 row-span-2 widget-pad-none" id="adminsSection">
+        <div class="widget-header-pad flex-between border-b">
+            <div class="widget-title">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                Access Control
+            </div>
+            <button class="btn btn-primary btn-sm" data-action="add-admin-open">+ Add User</button>
+        </div>
+        <div class="table-container max-h-[250px]">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Identity</th>
+                        <th>Privilege</th>
+                        <th class="text-right">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="adminsTable">
+                    {% for admin in admins %}
+                    <tr>
+                        <td><span class="code-pill">{{ admin.user_id }}</span></td>
+                        <td>
+                            {% if admin.role == 'superadmin' %}
+                            <span class="badge danger">Root</span>
+                            {% elif admin.role == 'admin' %}
+                            <span class="badge accent">Admin</span>
+                            {% else %}
+                            <span class="badge muted">Observer</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-right">
+                            {% if admin.role != 'superadmin' %}
+                            <button class="btn btn-danger btn-sm px-3" data-action="remove-admin" data-user-id="{{ admin.user_id }}">Revoke</button>
+                            {% else %}
+                            <span class="text-xs font-medium text-muted">Protected</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Settings Section -->
+    <div class="widget col-span-12 widget-pad-standard" id="settingsSection">
+        <div class="flex-between mb-4">
+            <div class="widget-title">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                Core Configuration
+            </div>
+            <button class="btn btn-glass btn-sm" data-action="refresh-settings">Scan Config</button>
+        </div>
+        <div id="settingsContent" class="flex gap-6 overflow-x-auto pb-2">
+            <div class="p-4 border-t text-center w-full text-muted text-sm border-dashed rounded-sm">
+                Click "Scan Config" to fetch live daemon configuration.
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Logs Panel -->
+    <div class="widget col-span-12 row-span-2 widget-pad-none">
+        <div class="widget-header-pad border-b">
+            <div class="widget-title">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                Audit Trail
+            </div>
+        </div>
+        <div class="table-container max-h-[300px]">
+            {% if recent_logs %}
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th class="w-40">Timestamp</th>
+                        <th class="w-48">Identity</th>
+                        <th class="w-40">Event</th>
+                        <th>Details</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in recent_logs %}
+                    <tr>
+                        <td><span class="code-pill text-xs ts" data-ts="{{ log.ts }}">{{ log.ts }}</span></td>
+                        <td><span class="code-pill text-xs">{{ log.user_id }}</span></td>
+                        <td><span class="badge accent">{{ log.action }}</span></td>
+                        <td class="text-secondary text-sm">{{ log.detail or '-' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="flex-col items-center justify-center py-12 text-muted opacity-50">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="mb-3"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+                <p class="text-sm">Audit trail is empty</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}
+
+{% block modals %}
+<!-- Session detail modal -->
+<div class="modal-overlay" id="modalOverlay" data-dismiss-on-backdrop>
+    <div class="modal-content">
+        <div class="modal-header p-5 border-b flex-between">
+            <div class="modal-title font-semibold flex items-center gap-3" id="modalTitle">
+                Sessions
+            </div>
+            <button class="modal-close btn-icon bg-glass border hover:bg-hover text-muted" data-action="close-modal">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <div class="modal-body p-5" id="modalBody">
+            <div class="text-center p-8 text-muted flex-col items-center">
+                <div class="status-dot mb-4"></div>
+                <span class="text-sm">Initializing...</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add admin modal -->
+<div class="modal-overlay" id="addAdminModal" data-dismiss-on-backdrop>
+    <div class="modal-content max-w-md">
+        <div class="modal-header p-5 border-b flex-between">
+            <div class="modal-title font-semibold text-lg">Provision User</div>
+            <button class="modal-close btn-icon bg-glass border hover:bg-hover text-muted" data-action="add-admin-close">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <div class="modal-body p-6">
+            <div class="form-group mb-6">
+                <label class="form-label text-sm text-muted mb-2 block">Telegram Identity (ID)</label>
+                <input type="number" class="form-input" id="adminUserId" placeholder="e.g. 123456789">
+            </div>
+            <div class="form-group mb-8">
+                <label class="form-label text-sm text-muted mb-2 block">Security Role</label>
+                <select class="form-select" id="adminRole">
+                    <option value="admin">Administrator</option>
+                    <option value="readonly">Observer (Read Only)</option>
+                </select>
+            </div>
+            <div>
+                <button class="btn btn-primary w-full btn-md" data-action="add-admin-submit">Deploy Access Policy</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{#
+  Server data crosses into JS through a NON-EXECUTABLE JSON island rather than
+  an inline <script> that interpolates template values. CSP does not treat
+  type="application/json" as script, so 'unsafe-inline' can stay out of
+  script-src. `tojson` escapes the payload safely.
+#}
+<script type="application/json" id="spam-data">{{ spam_counts | tojson }}</script>
+<script src="/static/dashboard.js?v=1.0.0"></script>
+{% endblock %}
